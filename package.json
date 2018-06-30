@@ -1,0 +1,21 @@
+{
+  "//1": "Some description that is different from the proper one?",
+
+  "name": "core-coin-",
+  "version": "0.0.1",
+  "description": "For Core Coin. Takes the base currency value and a 'track' config to produce lax values to match the track",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "9.x"
+  },
+  "repository": {
+    "url": "https://glitch.com/edit/#!/my-glitch-app"
+  },
+  "license": "MIT",
+  "keywords": [
+    "node",
+    "glitch"
+  ]
+}
