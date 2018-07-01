@@ -10,7 +10,7 @@ which config (3 / 5) - to add more create a fresh file named config-?
 pings per hour (null to use the above default)
 deviation (% random fluctuation) (null to use the above default)
 **/
-var results = getPrices(500, "5", 4);
+var results = getPrices(500, "3", 2);
 console.log(results);
 
 function trackConfig(day) {
@@ -174,8 +174,8 @@ function trackToDays(track, settings) {
   var trackSegmented = new Array(Math.ceil(track.length / hoursTest)).fill().map(_ => track.splice(0, hoursTest));
   var trackObject = {}
   
-  for (let i=1; i < trackSegmented.length; i++) {
-    trackObject[i] = trackSegmented[i]
+  for (let i=0; i < trackSegmented.length; i++) {
+    trackObject[i+1] = trackSegmented[i];
   }
   
   return trackObject
