@@ -4,7 +4,7 @@ var defaultDeviation = 4; // 4% deviation
 
 var debug = true;
 var logObjects = false;
-var debugLevel = 5;
+var debugLevel = "final";
 var debugAllTheThings = false;
 
 /**
@@ -15,10 +15,10 @@ pings per hour (null to use the above default)
 deviation (% random fluctuation) (null to use the above default)
 **/
 var results = getPrices(500, "5", 4);
-debugLog(results, 5, "Results");
+debugLog(results, "final", "Results");
 
 function debugLog(value, level = 1, title = "", type = "log") {
-  if (!debugAllTheThings && level !== debugLevel) return
+  if (!debugAllTheThings && level !== debugLevel && level !== "all") return
   // check if the type is either log or error
   if (!["log", "error"].includes(type)) {
     console.error("Invalid type for the debugLog function!");
@@ -31,7 +31,7 @@ function debugLog(value, level = 1, title = "", type = "log") {
       if (logObjects) {
         value = "\n" + JSON.stringify(value, null, 4);
       } else {
-        value = ": \n" + JSON.stringify(value, null, "").toString().replace(/,\[/g, ",\n[") + "\n";
+        value = ": \n" + JSON.stringify(value, null, "").toString().replace(/,\[/g, ",\n[").replace(/([:,(?!,)])/g, "$1 ").replace(/"/g, "'").replace(/], /g, "],\n") + "\n";
       }
     }
     // console.log(lines)
@@ -53,24 +53,24 @@ function trackConfig(day) {
 
   */
 
-  debugLog(day, 1);
+  debugLog(day, "trackConfig");
   var projection = [];
   var projectionTable = [];
   var blankTracker = 0;
   // For each day in the list...
   for (var i in day) {
-    debugLog(day[i].name, 1);
+    debugLog(day[i].name, "trackConfig");
 
     // For each item in the track
     for (var j in day[i]["track"]) {
       // Shorthand variable name
       var track = day[i]["track"];
-      debugLog(day[i]["name"] + ": " + track[j], 1);
+      debugLog(day[i]["name"] + ": " + track[j], "trackConfig");
       projectionTable.push(track[j]);
       // If it's a $, add it to the internal counter.
       if (track[j] == "$") {
         blankTracker += 1;
-        debugLog(blankTracker, 1, "blankTracker");
+        debugLog(blankTracker, "trackConfig", "blankTracker");
         continue
       }
 
@@ -80,7 +80,7 @@ function trackConfig(day) {
         projection.push("$" + blankTracker);
         blankTracker = 0;
       }
-      debugLog("track[j]: " + track[j], 1);
+      debugLog("track[j]: " + track[j], "trackConfig");
       // If the item starts with a # it means it should not have the following pings in that hour counted.
       if (track[j].startsWith("#")) {
         var endItem = track[j].substring(1);
@@ -95,11 +95,10 @@ function trackConfig(day) {
 
     }
   }
-  debugLog(projectionTable, 3, "projectionTable")
   return projection;
 }
 
-function trackConfigDetailed(settings, projection) {
+function trackConfigDetailed(projection, settings) {
   var pings = settings.pingsPerHour;
   var projectionDetailed = [];
   var addOn = true;
@@ -142,12 +141,12 @@ function trackDifference(projection) {
   */
   // Will hold all of the track projections.
   var dayTrack = [];
-  debugLog(projection, 1);
+  debugLog(projection, "trackDifference");
   for (var i in projection) {
     i = parseInt(i);
     
     var item = projection[i];
-    debugLog("projection[i]: " + projection[i], 1);
+    debugLog("projection[i]: " + projection[i], "trackDifference");
     // If the item starts with a $...
     // $ means dynamic, as in the track value is calculated for us.
     if (item.startsWith("$")) {
@@ -164,10 +163,10 @@ function trackDifference(projection) {
       // Get the difference between the last number and the next.
       var diff = differencefunction(parseInt(prevItem), parseInt(nextItem));
 
-      debugLog("Difference between " +  prevItem + " and " + nextItem + " is: " + diff + ", with " + item + " steps between.", 1);
+      debugLog("Difference between " +  prevItem + " and " + nextItem + " is: " + diff + ", with " + item + " steps between.", "trackDifference");
 
       var diffItems = trackPrice(prevItem, nextItem, item);
-      debugLog(diffItems, 1, "diffItems returned");
+      debugLog(diffItems, "trackDifference", "diffItems returned");
       for (var k in diffItems) {
         dayTrack.push(diffItems[k]);
       }
@@ -201,6 +200,33 @@ function trackGetRandom(percentageTrack, settings) {
   });
   return [percentageRandom, percentageValue, differenceValue]
 }
+
+function trackToDays(track, settings) {
+  
+  var hoursTest = track.length / settings.dayCount;
+  
+  debugLog(hoursTest, "trackToDays");
+  
+  
+  if (!(track.length) / settings.dayCount / settings.pingsPerHour == settings.hoursPerDay) {
+    debugLog("Looks like there was an error in the matrix! (Number of items don't split up perfectly into " + settings.dayCount + " days.)", "all", "", "error")
+    return "Error. See console."
+  }
+    
+  var trackSegmented = new Array(Math.ceil(track.length / hoursTest)).fill().map(_ => track.splice(0, hoursTest));
+  var trackObject = {}
+  
+  for (let i=1; i < trackSegmented.length; i++) {
+    trackObject[i] = trackSegmented[i]
+  }
+  
+  return trackObject
+}
+
+
+
+
+
 
 function differencefunction(a, b) {
   return Math.abs(a - b);
@@ -263,7 +289,7 @@ function randomDeviation(input, startVal, deviation) {
     out = input - random;
     random = parseInt("-" + random);
   } else {
-    debugLog("Should never get here. upOrDown should only be 0 or 1.", 1, "error");
+    debugLog("Should never get here. upOrDown should only be 0 or 1.", "all", "error");
   }
   
   // the final value taking the original starting input and adding/subtracting the track value (incl random) with it., what the (total)random change was (incl -).
@@ -288,7 +314,7 @@ function getPrices(startPrice=500, configToUse = "1", pingsPerHour = defaultPing
 
 
   console.error("===== Ran " + Date() + " =====");
-  debugLog(settings.days, 3);
+  debugLog(settings, 1);
 
 
 
@@ -296,7 +322,7 @@ function getPrices(startPrice=500, configToUse = "1", pingsPerHour = defaultPing
   // var newPrice = randomDeviation(startPrice);
 
   var projection = trackConfig(settings.days);
-  var projectionDetailed = trackConfigDetailed(settings, projection);
+  var projectionDetailed = trackConfigDetailed(projection, settings);
   var dayTrack = trackDifference(projectionDetailed);
   var randomTrack = trackGetRandom(dayTrack, settings);
   
@@ -304,24 +330,16 @@ function getPrices(startPrice=500, configToUse = "1", pingsPerHour = defaultPing
   var trackPercentageValue = randomTrack[1];
   var trackRandomDifferences = randomTrack[2];
   
-  debugLog(projection, 3, "projection");
-  debugLog(projectionDetailed, 3, "projectionDetailed");
-  debugLog(dayTrack, 3, "dayTrack");
-  debugLog(trackRandom, 3, "trackRandom");
-  debugLog(trackPercentageValue, 3, "trackPercentageValue");
-  debugLog(trackRandomDifferences, 3, "trackRandomDifferences");
+  var trackDays = trackToDays(trackRandom, settings);
   
-  var pingsPerDay = settings.pingsPerHour * settings.hoursPerDay;
-  
-  debugLog(trackRandom.length, 2);
-  
-  debugLog(pingsPerDay, 3, "pingsPerDay");
+  debugLog(projection, "resultsDebug", "projection");
+  debugLog(projectionDetailed, "resultsDebug", "projectionDetailed");
+  debugLog(dayTrack, "resultsDebug", "dayTrack");
+  debugLog(trackRandom, "resultsDebug", "trackRandom");
+  debugLog(trackPercentageValue, "resultsDebug", "trackPercentageValue");
+  debugLog(trackRandomDifferences, "resultsDebug", "trackRandomDifferences");
+  debugLog(trackDays, "resultsDebug", "trackDays");
   
   
-  
-  debugLog((trackRandomDifferences.length) / settings.dayCount / settings.pingsPerHour == settings.hoursPerDay, 4, "Equals number of pings in a day?");
-  
-  
-  
-  return [trackRandom, trackPercentageValue, trackRandomDifferences]
+  return trackDays
 }
